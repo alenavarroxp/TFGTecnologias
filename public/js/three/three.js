@@ -120,11 +120,11 @@ animate();
   
 // });
 
-socket.on("disconnect", () => {
+socket.on("disconnected", (id) => {
   console.log("Desconectado del servidor");
   //ELIMINAR EL PERSONAJE DE LA ESCENA
   scene.children.forEach((element) => {
-    if (element.name == socket.id) {
+    if (element.name == id) {
       scene.remove(element);
     }
   });

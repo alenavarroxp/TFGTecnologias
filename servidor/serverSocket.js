@@ -11,6 +11,7 @@ function WebSocketServer() {
         console.log("Se ha desconectado el usuario", socket.id);
         delete this.users[socket.id];
         console.log("USERS",this.users);
+        socket.broadcast.emit("disconnected", socket.id);
       });
 
       socket.on("newCharacter", (obj) => {
