@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three JS</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/postcss@8.3.6/dist/postcss.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/autoprefixer@10.3.4/dist/autoprefixer.min.css">
+
 </head>
+
 <body>
+    <div id="GUI" class="absolute text-white w-fit right-2 top-2 border-2 border-white p-2">
+        <button id="changeCameraBtn">Cambiar Cámara</button>
+    </div>
+    <div id="container"></div>
     <script type="module" src="../js/three/three.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
     <script src="../clientSocket.js"></script>
 </body>
+
 </html>

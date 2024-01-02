@@ -13,19 +13,29 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const container = document.getElementById("container");
+container.appendChild(renderer.domElement);
+
+//LUZ DE VIDEOJUEGO HEMISPHERICA
+
+const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+light.position.set(0, 50, 0);
+scene.add(light);
 
 var character;
 const characters = [];
 
 // Crear un plano
 const planeGeometry = new THREE.PlaneGeometry(50, 50);
-const planeMaterial = new THREE.MeshBasicMaterial({
+const planeMaterial = new THREE.MeshPhongMaterial({
   color: 0x999999,
   side: THREE.DoubleSide,
 });
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = Math.PI / 2;
+plane.receiveShadow = true;
 scene.add(plane);
 
 // Posicionar la cámara
@@ -67,6 +77,24 @@ function handleKeyUp(event) {
   }
 }
 
+let cameraMode = "default"; // Modo de la cámara por defecto
+
+// Función para cambiar el modo de la cámara
+function changeCameraMode() {
+  if (cameraMode === "default") {
+    // Cambiar a modo de seguir al jugador
+    cameraMode = "followPlayer";
+  } else {
+    // Cambiar a modo por defecto
+    cameraMode = "default";
+    camera.position.set(5, 50, 5);
+  }
+}
+
+// Asignar la función al evento de clic del botón
+const changeCameraBtn = document.getElementById("changeCameraBtn");
+changeCameraBtn.addEventListener("click", changeCameraMode);
+
 // Animación
 const animate = function () {
   requestAnimationFrame(animate);
@@ -87,11 +115,29 @@ const animate = function () {
   // Actualizar OrbitControls
   controls.update();
 
+  // Actualizar la posición de la cámara según el modo actual
+  if (cameraMode === "followPlayer") {
+    // Modo seguir al jugador
+    camera.position
+      .copy(character.mesh.position)
+      .add(new THREE.Vector3(0, 5, 10));
+    camera.lookAt(character.mesh.position);
+  }
+
   renderer.render(scene, camera);
 };
 
 // Lanzar la animación
 animate();
+
+//QUIERO HACER EL RESIZE
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+
 
 socket.on("connect", () => {
   console.log("Conectado al servidor: ", socket.id);
@@ -103,9 +149,15 @@ socket.on("connect", () => {
       y: 0.5,
       z: Math.random() * (10 - -10) + -10,
     },
-    { x: 0, y: 0, z: 0 }
+    { x: 0, y: 0, z: 0 },
+    0xff0000
   );
+  const characterMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
   character.mesh.name = socket.id;
+  character.mesh.castShadow = true;
+  character.mesh.receiveShadow = true;
+  character.mesh.material = characterMaterial;
+
   scene.add(character.mesh);
   characters.push(character);
 
@@ -113,6 +165,7 @@ socket.on("connect", () => {
     id: character.id,
     position: character.mesh.position,
     rotation: character.mesh.rotation,
+    color: 0x00ff00,
   });
 
   socket.emit("recuperarPersonajes", socket.id);
@@ -131,9 +184,16 @@ socket.on("disconnected", (id) => {
 
 socket.on("newCharacter", (obj) => {
   console.log("OBJ en newCharacter: ", obj);
-  const character = new Character(obj.id, obj.position, obj.rotation);
+  const character = new Character(
+    obj.id,
+    obj.position,
+    obj.rotation,
+    obj.color
+  );
   character.mesh.name = obj.id;
   scene.add(character.mesh);
+  const characterMaterial = new THREE.MeshPhongMaterial({ color: obj.color });
+  character.mesh.material = characterMaterial;
   characters.push(character);
   console.log("SCENE: ", scene.children);
 });
@@ -155,14 +215,14 @@ socket.on("moveCharacter", (obj) => {
 socket.on("recuperarPersonajes", (id) => {
   scene.children.forEach((element) => {
     console.log("ELEMENTO RECUPERAR: ", element.name);
-    if(!element.name) return;
+    if (!element.name) return;
     if (element.name != id) {
       socket.emit("newCharacter", {
         id: element.name,
         position: element.position,
         rotation: element.rotation,
+        color: 0x00ff00,
       });
     }
   });
-})
-
+});

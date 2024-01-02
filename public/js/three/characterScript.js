@@ -1,11 +1,11 @@
 import * as THREE from "/scripts/three/build/three.module.js";
 
 export class Character {
-  constructor(id, position, rotation) {
+  constructor(id, position, rotation, color) {
     // Crear el cubo como personaje
     this.id = id;
     this.geometry = new THREE.BoxGeometry();
-    this.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    this.material = new THREE.MeshBasicMaterial({ color: color});
     this.mesh = new THREE.Mesh(this.geometry, this.material);
 
     console.log("Se ha creado el personaje: ", id, position, rotation);
