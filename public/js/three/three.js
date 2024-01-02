@@ -16,6 +16,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 var character;
+const characters = [];
 
 // Crear un plano
 const planeGeometry = new THREE.PlaneGeometry(50, 50);
@@ -71,10 +72,10 @@ const animate = function () {
   requestAnimationFrame(animate);
 
   // Mover el personaje según las teclas presionadas
-  if (keys.W) character.moveForward();
-  if (keys.A) character.moveLeft();
-  if (keys.S) character.moveBackward();
-  if (keys.D) character.moveRight();
+  if (keys.W) character.moveForward(characters);
+  if (keys.A) character.moveLeft(characters);
+  if (keys.S) character.moveBackward(characters);
+  if (keys.D) character.moveRight(characters);
 
   if (keys.W || keys.A || keys.S || keys.D)
     socket.emit("moveCharacter", {
@@ -106,6 +107,7 @@ socket.on("connect", () => {
   );
   character.mesh.name = socket.id;
   scene.add(character.mesh);
+  characters.push(character);
 
   socket.emit("newCharacter", {
     id: character.id,
@@ -132,6 +134,7 @@ socket.on("newCharacter", (obj) => {
   const character = new Character(obj.id, obj.position, obj.rotation);
   character.mesh.name = obj.id;
   scene.add(character.mesh);
+  characters.push(character);
   console.log("SCENE: ", scene.children);
 });
 
