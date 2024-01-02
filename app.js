@@ -1,7 +1,13 @@
+const http = require('http');
+const socketIO = require('socket.io');
 const express = require('express');
 const path = require('path');
+const modeloWSS = require("./servidor/serverSocket.js")
 
 const app = express();
+const httpServer = http.createServer(app);
+const ws = new modeloWSS.WebSocketServer();
+const { Server } = require("socket.io");
 
 // Configurar la carpeta de archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
@@ -19,6 +25,11 @@ app.get('/three', (req, res) => {
 });
 
 // Iniciar el servidor
-app.listen(3001, () => {
+httpServer.listen(3001, () => {
     console.log('Server is running on port 3001');
 });
+
+const io = new Server()
+io.listen(httpServer)
+
+ws.start(io);

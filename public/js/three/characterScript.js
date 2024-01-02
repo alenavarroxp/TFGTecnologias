@@ -1,14 +1,15 @@
 import * as THREE from '/scripts/three/build/three.module.js';
 
 export class Character {
-    constructor() {
+    constructor(id,position, rotation) {
         // Crear el cubo como personaje
+        this.id = id;
         this.geometry = new THREE.BoxGeometry();
         this.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         this.mesh = new THREE.Mesh(this.geometry, this.material);
 
         // Posicionar al personaje inicialmente
-        this.mesh.position.set(0, 0.5, 0);
+        this.mesh.position.set(position.x, position.y, position.z);
 
         // Velocidad del personaje
         this.speed = 0.1;
