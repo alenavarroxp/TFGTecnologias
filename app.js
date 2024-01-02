@@ -1,5 +1,4 @@
 const http = require('http');
-const socketIO = require('socket.io');
 const express = require('express');
 const path = require('path');
 const modeloWSS = require("./servidor/serverSocket.js")
@@ -13,15 +12,19 @@ const { Server } = require("socket.io");
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/scripts", express.static(path.join(__dirname,"node_modules")))
 
+
 // Ruta "/"
 app.get('/', (req, res) => {
-    res.send('Hello from / route!');
+    res.sendFile(path.join(__dirname, 'public', 'inicio.html'));
 });
 
-// Ruta "/three"
 app.get('/three', (req, res) => {
     //Quiero que me devuelva el archivo three.html
     res.sendFile(path.join(__dirname, 'public', 'three.html'));
+});
+
+app.get("/babylon", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "babylon.html"));
 });
 
 // Iniciar el servidor

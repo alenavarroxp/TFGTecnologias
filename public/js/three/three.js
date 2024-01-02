@@ -1,10 +1,11 @@
 import * as THREE from "/scripts/three/build/three.module.js";
 import { OrbitControls } from "/scripts/three/examples/jsm/controls/OrbitControls.js";
-import { Character } from "./characterScript.js";
+import { Character } from "./characterThree.js";
 
 const socket = io();
 // Configuración básica
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
