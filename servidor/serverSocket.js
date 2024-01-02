@@ -16,6 +16,7 @@ function WebSocketServer() {
 
       socket.on("newCharacter", (obj) => {
         obj.users = this.users
+        obj.id = socket.id;
         socket.broadcast.emit("newCharacter", obj);
       });
 
@@ -27,6 +28,11 @@ function WebSocketServer() {
           obj.position
         );
         socket.broadcast.emit("moveCharacter", obj);
+      });
+
+      socket.on("recuperarPersonajes", (id) => {
+        console.log("Recuperando personajes...");
+        socket.broadcast.emit("recuperarPersonajes", id);
       });
     });
   };

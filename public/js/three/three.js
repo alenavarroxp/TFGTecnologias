@@ -2,6 +2,7 @@ import * as THREE from "/scripts/three/build/three.module.js";
 import { OrbitControls } from "/scripts/three/examples/jsm/controls/OrbitControls.js";
 import { Character } from "./characterScript.js";
 
+const socket = io();
 // Configuración básica
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -14,6 +15,8 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+var character;
+
 // Crear un plano
 const planeGeometry = new THREE.PlaneGeometry(50, 50);
 const planeMaterial = new THREE.MeshBasicMaterial({
@@ -23,25 +26,6 @@ const planeMaterial = new THREE.MeshBasicMaterial({
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = Math.PI / 2;
 scene.add(plane);
-
-// Crear el personaje (cubo)
-const character = new Character(
-  socket.id,
-  {
-    x: Math.random() * (10 - -10) + -10,
-    y: 0.5,
-    z: Math.random() * (10 - -10) + -10,
-  },
-  { x: 0, y: 0, z: 0 }
-);
-character.mesh.name = socket.id;
-scene.add(character.mesh);
-
-socket.emit("newCharacter", {
-  id: socket.id,
-  position: character.mesh.position,
-  rotation: character.mesh.rotation,
-});
 
 // Posicionar la cámara
 camera.position.set(5, 5, 5);
@@ -108,22 +92,35 @@ const animate = function () {
 // Lanzar la animación
 animate();
 
-// socket.on("recuperarPersonajes", (id) => {
-//   console.log("Recuperando personajes...");
-//   scene.children.forEach((element) => {
-//     if (!element.name) return;
+socket.on("connect", () => {
+  console.log("Conectado al servidor: ", socket.id);
+  // Crear el personaje (cubo)
+  character = new Character(
+    socket.id,
+    {
+      x: Math.random() * (10 - -10) + -10,
+      y: 0.5,
+      z: Math.random() * (10 - -10) + -10,
+    },
+    { x: 0, y: 0, z: 0 }
+  );
+  character.mesh.name = socket.id;
+  scene.add(character.mesh);
 
-//     if (element.name != id) {
-//     //   console.log("Añadiendo personaje: ", element.name);
-//     }
-//   });
-  
-// });
+  socket.emit("newCharacter", {
+    id: character.id,
+    position: character.mesh.position,
+    rotation: character.mesh.rotation,
+  });
+
+  socket.emit("recuperarPersonajes", socket.id);
+});
 
 socket.on("disconnected", (id) => {
   console.log("Desconectado del servidor");
   //ELIMINAR EL PERSONAJE DE LA ESCENA
   scene.children.forEach((element) => {
+    console.log("ELEMENTO DESCONECTAR: ", element.name);
     if (element.name == id) {
       scene.remove(element);
     }
@@ -151,3 +148,18 @@ socket.on("moveCharacter", (obj) => {
     }
   });
 });
+
+socket.on("recuperarPersonajes", (id) => {
+  scene.children.forEach((element) => {
+    console.log("ELEMENTO RECUPERAR: ", element.name);
+    if(!element.name) return;
+    if (element.name != id) {
+      socket.emit("newCharacter", {
+        id: element.name,
+        position: element.position,
+        rotation: element.rotation,
+      });
+    }
+  });
+})
+
