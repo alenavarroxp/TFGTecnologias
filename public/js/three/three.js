@@ -190,7 +190,7 @@ socket.on("connect", () => {
     id: character.id,
     position: character.mesh.position,
     rotation: character.mesh.rotation,
-    color: 0x00ff00,
+    color: "#00ff00",
   });
 
   socket.emit("recuperarPersonajes", socket.id);
