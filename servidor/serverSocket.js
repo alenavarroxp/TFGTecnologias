@@ -21,12 +21,6 @@ function WebSocketServer() {
       });
 
       socket.on("moveCharacter", (obj) => {
-        console.log(
-          "Se ha movido el personaje ",
-          obj.id,
-          " a la posición: ",
-          obj.position
-        );
         socket.broadcast.emit("moveCharacter", obj);
       });
 
@@ -34,6 +28,7 @@ function WebSocketServer() {
         console.log("Recuperando personajes...");
         socket.broadcast.emit("recuperarPersonajes", id);
       });
+      
     });
   };
 }

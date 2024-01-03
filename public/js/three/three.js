@@ -138,7 +138,31 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+function eliminarPersonaje(id) {
+  console.log(
+    "Nombres de objetos antes de eliminar:",
+    scene.children.map((obj) => obj.name)
+  );
 
+  const objectToRemove = scene.getObjectByName(id);
+
+  if (objectToRemove) {
+    console.log("ELIMINANDO ELEMENTO", objectToRemove);
+    scene.remove(objectToRemove);
+
+    // Limpia los recursos asociados al objeto si es necesario
+    if (objectToRemove.dispose) {
+      objectToRemove.dispose();
+    }
+
+    console.log(
+      "Nombres de objetos despues de eliminar:",
+      scene.children.map((obj) => obj.name)
+    );
+  } else {
+    console.log("No se encontró el objeto con nombre", id);
+  }
+}
 
 socket.on("connect", () => {
   console.log("Conectado al servidor: ", socket.id);
@@ -173,39 +197,29 @@ socket.on("connect", () => {
 });
 
 socket.on("disconnected", (id) => {
-  console.log("Desconectado del servidor");
-  //ELIMINAR EL PERSONAJE DE LA ESCENA
-  scene.children.forEach((element) => {
-    console.log("ELEMENTO DESCONECTAR: ", element.name);
-    if (element.name == id) {
-      scene.remove(element);
-    }
-  });
+  console.log("Desconectado del servidor", id);
+  eliminarPersonaje(id);
 });
 
 socket.on("newCharacter", (obj) => {
-  console.log("OBJ en newCharacter: ", obj);
-  const character = new Character(
-    obj.id,
-    obj.position,
-    obj.rotation,
-    obj.color
-  );
-  character.mesh.name = obj.id;
-  scene.add(character.mesh);
-  const characterMaterial = new THREE.MeshPhongMaterial({ color: obj.color });
-  character.mesh.material = characterMaterial;
-  characters.push(character);
-  console.log("SCENE: ", scene.children);
+  console.log("Nuevo personaje", obj.id,"y yo soy",socket.id)
+  const object = scene.getObjectByName(obj.id);
+  if (!object) {
+    const character = new Character(
+      obj.id,
+      obj.position,
+      obj.rotation,
+      obj.color
+    );
+    character.mesh.name = obj.id;
+    scene.add(character.mesh);
+    const characterMaterial = new THREE.MeshPhongMaterial({ color: obj.color });
+    character.mesh.material = characterMaterial;
+    characters.push(character);
+  }
 });
 
 socket.on("moveCharacter", (obj) => {
-  console.log(
-    "Se ha movido el personaje ",
-    obj.id,
-    " a la posición: ",
-    obj.position
-  );
   scene.children.forEach((element) => {
     if (element.name == obj.id) {
       element.position.set(obj.position.x, obj.position.y, obj.position.z);
@@ -215,7 +229,6 @@ socket.on("moveCharacter", (obj) => {
 
 socket.on("recuperarPersonajes", (id) => {
   scene.children.forEach((element) => {
-    console.log("ELEMENTO RECUPERAR: ", element.name);
     if (!element.name) return;
     if (element.name != id) {
       socket.emit("newCharacter", {
@@ -226,4 +239,10 @@ socket.on("recuperarPersonajes", (id) => {
       });
     }
   });
+});
+
+document.getElementById("volver").addEventListener("click", () => {
+  event.preventDefault();
+  eliminarPersonaje(socket.id);
+  window.location.href = "/";
 });
