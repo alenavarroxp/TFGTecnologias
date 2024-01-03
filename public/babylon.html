@@ -19,17 +19,16 @@
         integrity="sha512-XoT/FpkDjE86dUt1FIszn5+UNEIEpZupAcufRB6SumNuDse+djx0wF/Q40fb1cTKaBJtOH8S5PR/JFMXsnWFYg=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="module" src="../js/babylon/babylon.js"></script>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script src="/scripts/stats.js/build/stats.min.js"></script>
+
 </head>
 
 <body>
-    <div class="absolute flex justify-center p-2">
-        <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Volver al inicio</a>
-    </div>
-    <div id="GUI" class="absolute text-white w-fit right-2 top-2">
-        <button id="changeCameraBtn"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Cambiar Cámara</button>
+    <div id="GUI" class="absolute text-white right-2 top-2 flex flex-col items-end">
+        <a id="volver" href="/" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">Volver al inicio</a>
+        <button id="changeCameraBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Cambiar Cámara</button>
     </div>
     <canvas id="renderCanvas" class="w-full h-screen"></canvas>
 </body>

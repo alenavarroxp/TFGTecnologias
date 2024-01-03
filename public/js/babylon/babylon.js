@@ -98,8 +98,16 @@ function initScene() {
   const changeCameraBtn = document.getElementById("changeCameraBtn");
   changeCameraBtn.addEventListener("click", changeCameraMode);
 
+  const stats = new Stats();
+  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  const GUI = document.getElementById("GUI");
+  // Añadir el panel al contenedor
+  GUI.appendChild(stats.dom);
+  
+
   // Iniciar la renderización de la escena
   engine.runRenderLoop(() => {
+    stats.begin();
     // Mover el personaje según las teclas presionadas
     if (keys.W) character.moveForward(characters);
     if (keys.A) character.moveLeft(characters);
@@ -139,6 +147,7 @@ function initScene() {
     }
 
     scene.render();
+    stats.end();
   });
 
   // Redimensionar la escena cuando se cambie el tamaño de la ventana

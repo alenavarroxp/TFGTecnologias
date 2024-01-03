@@ -50,7 +50,7 @@ controls.maxDistance = 25;
 
 controls.enableZoom = true;
 controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-controls.dampingFactor = 0.25;
+controls.dampingFactor = 0.5;
 controls.maxPolarAngle = Math.PI / 2.15;
 
 // Control de teclado
@@ -96,8 +96,14 @@ function changeCameraMode() {
 const changeCameraBtn = document.getElementById("changeCameraBtn");
 changeCameraBtn.addEventListener("click", changeCameraMode);
 
+const stats = new Stats();
+stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+// Añadir el panel al contenedor
+container.appendChild(stats.dom);
+
 // Animación
 const animate = function () {
+  stats.begin();
   requestAnimationFrame(animate);
 
   // Mover el personaje según las teclas presionadas
@@ -126,6 +132,7 @@ const animate = function () {
   }
 
   renderer.render(scene, camera);
+  stats.end();
 };
 
 // Lanzar la animación
@@ -202,7 +209,7 @@ socket.on("disconnected", (id) => {
 });
 
 socket.on("newCharacter", (obj) => {
-  console.log("Nuevo personaje", obj.id,"y yo soy",socket.id)
+  console.log("Nuevo personaje", obj.id, "y yo soy", socket.id);
   const object = scene.getObjectByName(obj.id);
   if (!object) {
     const character = new Character(
