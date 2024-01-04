@@ -14,7 +14,7 @@ export class Character {
       this.mesh = gltf.scene;
 
       this.mesh.position.set(position.x, position.y, position.z);
-      this.mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+      // this.mesh.rotation.set(rotation.x, rotation.y, rotation.z);
       this.mesh.scale.set(0.75, 0.75, 0.75);
       this.mesh.name = id;
       this.speed = 0.1;
@@ -48,8 +48,6 @@ export class Character {
         }
       });
 
-      console.log("Se ha creado el personaje: ", this);
-
       if (callback) {
         callback(this);
       }
@@ -74,11 +72,8 @@ export class Character {
 
       action.reset();
       action.play();
+      this.animationName = animationName;
       this.currentAction = action; // Guardar la referencia a la acción actual
-      console.log(
-        "GUARDO LA REFERENCIA A LA ACCIÓN ACTUAL: ",
-        this.currentAction
-      );
     }
   }
 
@@ -121,7 +116,6 @@ export class Character {
       this.smoothRotate(Math.PI / 2); // Rotar 90 grados para ir a la derecha
     }
   }
-
   smoothRotate(targetRotation) {
     this.mesh.rotation.y = this.lerpAngle(
       this.mesh.rotation.y,
@@ -137,7 +131,7 @@ export class Character {
         b -= 2 * Math.PI;
       } else {
         b += 2 * Math.PI;
-      }s
+      }
     }
     return a + t * (b - a);
   }

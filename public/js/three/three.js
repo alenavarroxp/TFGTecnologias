@@ -119,8 +119,6 @@ const animate = function () {
   if (keys.S) character.moveBackward(characters);
   if (keys.D) character.moveRight(characters);
 
-  const noKeysPressed = !keys.W && !keys.A && !keys.S && !keys.D;
-
   // Si no se presiona ninguna tecla, reproducir la animación de Idle
   if (character) {
     if (keys.W || keys.A || keys.S || keys.D) {
@@ -130,15 +128,14 @@ const animate = function () {
       // Si no se presiona ninguna tecla, reproducir la animación Idle
       character.playAnimation("CharacterArmature|Idle");
     }
-  }
-  
-
-  if (keys.W || keys.A || keys.S || keys.D) {
-    socket.emit("moveCharacter", {
-      id: socket.id,
-      position: character.mesh.position,
-      rotation: character.mesh.rotation,
-    });
+    try {
+      socket.emit("moveCharacter", {
+        id: socket.id,
+        position: character.mesh.position,
+        rotation: character.mesh.rotation,
+        animation: character.animationName,
+      });
+    } catch (err) {}
   }
 
   // Actualizar OrbitControls
@@ -203,7 +200,6 @@ socket.on("connect", () => {
     { x: 0, y: 0, z: 0 },
     0xff0000,
     (character) => {
-      // Esta función se ejecutará cuando la carga del modelo esté completa
       scene.add(character.mesh);
       characters.push(character);
 
@@ -213,20 +209,31 @@ socket.on("connect", () => {
         rotation: character.mesh.rotation,
         color: 0x00ff00,
       });
+
+      socket.emit("recuperarPersonajes", socket.id);
     }
   );
-
-  socket.emit("recuperarPersonajes", socket.id);
 });
 
 socket.on("disconnected", (id) => {
   console.log("Desconectado del servidor", id);
+  isCreatingCharacter = false;
   eliminarPersonaje(id);
 });
 
+let isCreatingCharacter = false;
+
 socket.on("newCharacter", (obj) => {
-  console.log("Nuevo personaje", obj.id, "y yo soy", socket.id);
+  console.log("Nuevo personaje: ", obj, "isCreatingCharacter", isCreatingCharacter);
+  if(obj.from == "recuperar"){
+    isCreatingCharacter = false;
+    console.log("isCreatingCharacter", isCreatingCharacter);
+  }
+  if (isCreatingCharacter) return;
+
+  isCreatingCharacter = true;
   const object = scene.getObjectByName(obj.id);
+
   if (!object) {
     const character = new Character(
       obj.id,
@@ -236,6 +243,8 @@ socket.on("newCharacter", (obj) => {
       (character) => {
         scene.add(character.mesh);
         characters.push(character);
+        console.log("scene.children", scene.children);
+        isCreatingCharacter = false;
       }
     );
   }
@@ -245,6 +254,9 @@ socket.on("moveCharacter", (obj) => {
   scene.children.forEach((element) => {
     if (element.name == obj.id) {
       element.position.set(obj.position.x, obj.position.y, obj.position.z);
+      element.rotation.set(obj.rotation._x, obj.rotation._y, obj.rotation._z);
+      let character = characters.find((character) => character.id == obj.id);
+      character.playAnimation(obj.animation);
     }
   });
 });
@@ -253,11 +265,13 @@ socket.on("recuperarPersonajes", (id) => {
   scene.children.forEach((element) => {
     if (!element.name) return;
     if (element.name != id) {
+      console.log("RECUPERAR")
       socket.emit("newCharacter", {
         id: element.name,
         position: element.position,
         rotation: element.rotation,
         color: 0x00ff00,
+        from: "recuperar"
       });
     }
   });
