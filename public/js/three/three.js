@@ -101,23 +101,45 @@ stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 // Añadir el panel al contenedor
 container.appendChild(stats.dom);
 
+const clock = new THREE.Clock();
 // Animación
 const animate = function () {
   stats.begin();
   requestAnimationFrame(animate);
 
+  const deltaTime = clock.getDelta();
+
+  // Actualiza el mezclador de cada personaje
+  characters.forEach((character) => {
+    character.update(deltaTime);
+  });
   // Mover el personaje según las teclas presionadas
   if (keys.W) character.moveForward(characters);
   if (keys.A) character.moveLeft(characters);
   if (keys.S) character.moveBackward(characters);
   if (keys.D) character.moveRight(characters);
 
-  if (keys.W || keys.A || keys.S || keys.D)
+  const noKeysPressed = !keys.W && !keys.A && !keys.S && !keys.D;
+
+  // Si no se presiona ninguna tecla, reproducir la animación de Idle
+  if (character) {
+    if (keys.W || keys.A || keys.S || keys.D) {
+      // Si se presiona alguna tecla de movimiento, reproducir la animación de caminar
+      character.playAnimation("CharacterArmature|Walk");
+    } else {
+      // Si no se presiona ninguna tecla, reproducir la animación Idle
+      character.playAnimation("CharacterArmature|Idle");
+    }
+  }
+  
+
+  if (keys.W || keys.A || keys.S || keys.D) {
     socket.emit("moveCharacter", {
       id: socket.id,
       position: character.mesh.position,
       rotation: character.mesh.rotation,
     });
+  }
 
   // Actualizar OrbitControls
   controls.update();
@@ -134,9 +156,6 @@ const animate = function () {
   renderer.render(scene, camera);
   stats.end();
 };
-
-// Lanzar la animación
-animate();
 
 //QUIERO HACER EL RESIZE
 window.addEventListener("resize", () => {
@@ -178,27 +197,24 @@ socket.on("connect", () => {
     socket.id,
     {
       x: Math.random() * (10 - -10) + -10,
-      y: 0.5,
+      y: 0,
       z: Math.random() * (10 - -10) + -10,
     },
     { x: 0, y: 0, z: 0 },
-    0xff0000
+    0xff0000,
+    (character) => {
+      // Esta función se ejecutará cuando la carga del modelo esté completa
+      scene.add(character.mesh);
+      characters.push(character);
+
+      socket.emit("newCharacter", {
+        id: character.id,
+        position: character.mesh.position,
+        rotation: character.mesh.rotation,
+        color: 0x00ff00,
+      });
+    }
   );
-  const characterMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-  character.mesh.name = socket.id;
-  character.mesh.castShadow = true;
-  character.mesh.receiveShadow = true;
-  character.mesh.material = characterMaterial;
-
-  scene.add(character.mesh);
-  characters.push(character);
-
-  socket.emit("newCharacter", {
-    id: character.id,
-    position: character.mesh.position,
-    rotation: character.mesh.rotation,
-    color: "#00ff00",
-  });
 
   socket.emit("recuperarPersonajes", socket.id);
 });
@@ -216,13 +232,12 @@ socket.on("newCharacter", (obj) => {
       obj.id,
       obj.position,
       obj.rotation,
-      obj.color
+      obj.color,
+      (character) => {
+        scene.add(character.mesh);
+        characters.push(character);
+      }
     );
-    character.mesh.name = obj.id;
-    scene.add(character.mesh);
-    const characterMaterial = new THREE.MeshPhongMaterial({ color: obj.color });
-    character.mesh.material = characterMaterial;
-    characters.push(character);
   }
 });
 
@@ -253,3 +268,5 @@ document.getElementById("volver").addEventListener("click", () => {
   eliminarPersonaje(socket.id);
   window.location.href = "/";
 });
+
+animate();
