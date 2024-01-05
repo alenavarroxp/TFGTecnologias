@@ -1,20 +1,53 @@
 export class Character {
-  constructor(id, position, rotation, color, scene) {
-    // Crear el cubo como personaje
+  constructor(id, position, rotation, color, scene, callback) {
     this.id = id;
-    this.mesh = BABYLON.MeshBuilder.CreateBox(id, { size: 1 }, scene);
-    this.mesh.material = new BABYLON.StandardMaterial(`material_${id}`, scene);
-    this.mesh.material.diffuseColor = new BABYLON.Color3.FromHexString(color);
-    console.log("COLOR", this.mesh.material.diffuseColor.toHexString());
-    // Posicionar al personaje inicialmente
-    this.mesh.position = new BABYLON.Vector3(
-      position._x,
-      position._y,
-      position._z
-    );
+    this.mesh = null;
+    this.animations = {}; // Diccionario para almacenar animaciones
+    this.mixer = null;
+    this.isMoving = false;
 
-    // Velocidad del personaje
-    this.speed = 0.1;
+    // Carga el modelo GLB utilizando SceneLoader.ImportMesh
+    BABYLON.SceneLoader.ImportMesh(
+      "",
+      "/models/",
+      "character.glb",
+      scene,
+      (newMeshes, particleSystems, skeletons) => {
+        // El modelo GLB contiene varios meshes, pero solo queremos el primero
+        this.mesh = newMeshes[0];
+        console.log("this.mesh", this.mesh);
+        console.log("scene", scene);
+
+        scene.animationGroups.forEach((animation) => {
+          this.animations[animation.name] = animation;
+          animation.stop();
+        });
+
+        var animating = true;
+        const idleAnimation = scene.getAnimationGroupByName(
+          "CharacterArmature|Idle"
+        );
+
+        if (animating)
+          idleAnimation.start(
+            true,
+            1.0,
+            idleAnimation.from,
+            idleAnimation.to,
+            false
+          );
+        // Posición y rotación
+        this.mesh.position.set(position.x, position.y, position.z);
+        this.mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+        this.mesh.scaling.set(0.75, 0.75, 0.75);
+        this.mesh.name = id;
+        this.speed = 0.1;
+
+        if (callback) {
+          callback(this);
+        }
+      }
+    );
   }
 
   moveForward(characters) {
@@ -23,6 +56,7 @@ export class Character {
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.z = newPosition.z;
+      this.smoothRotate(Math.PI); // Rotar 180 grados para ir hacia adelante
     }
   }
 
@@ -32,6 +66,7 @@ export class Character {
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.z = newPosition.z;
+      this.smoothRotate(0); // Rotar 0 grados para ir hacia atrás
     }
   }
 
@@ -41,6 +76,7 @@ export class Character {
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.x = newPosition.x;
+      this.smoothRotate(-Math.PI / 2); // Rotar -90 grados para ir a la izquierda
     }
   }
 
@@ -50,7 +86,27 @@ export class Character {
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.x = newPosition.x;
+      this.smoothRotate(Math.PI / 2); // Rotar 90 grados para ir a la derecha
     }
+  }
+  smoothRotate(targetRotation) {
+    this.mesh.rotation.y = this.lerpAngle(
+      this.mesh.rotation.y,
+      targetRotation,
+      0.1
+    );
+  }
+
+  lerpAngle(a, b, t) {
+    const angleDiff = b - a;
+    if (Math.abs(angleDiff) > Math.PI) {
+      if (angleDiff > 0) {
+        b -= 2 * Math.PI;
+      } else {
+        b += 2 * Math.PI;
+      }
+    }
+    return a + t * (b - a);
   }
 
   checkCollisions(newPosition, characters) {

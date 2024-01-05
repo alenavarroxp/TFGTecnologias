@@ -22,8 +22,9 @@ container.appendChild(renderer.domElement);
 //LUZ DE VIDEOJUEGO HEMISPHERICA
 
 const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
-light.position.set(0, 50, 0);
+light.position.set(0, 1, 0);
 scene.add(light);
+
 
 var character;
 const characters = [];
@@ -46,7 +47,7 @@ camera.lookAt(0, 0, 0);
 // Configurar OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 7.5;
-controls.maxDistance = 25;
+controls.maxDistance = 100;
 
 controls.enableZoom = true;
 controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled

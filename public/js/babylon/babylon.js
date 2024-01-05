@@ -21,6 +21,10 @@ function initScene() {
     scene
   );
   camera.attachControl(canvas, true);
+  camera.upperBetaLimit = Math.PI / 2.15; // Límite superior
+
+
+  
   const cameraInitialPosition = camera.position.clone();
 
   // Crear una luz
@@ -83,16 +87,15 @@ function initScene() {
     } else {
       cameraMode = "default";
       // Ajustar las propiedades de la cámara para volver a la posición inicial
-      camera.position = cameraInitialPosition
+      camera.position = cameraInitialPosition;
       camera.radius = 70;
       camera.alpha = -Math.PI / 2;
-      camera.beta = Math.PI / 4; 
+      camera.beta = Math.PI / 4;
 
       // Mira hacia el objetivo (ajusta según sea necesario)
       camera.setTarget(BABYLON.Vector3.Zero());
     }
   }
-  
 
   // Asignar la función al evento de clic del botón
   const changeCameraBtn = document.getElementById("changeCameraBtn");
@@ -103,7 +106,6 @@ function initScene() {
   const GUI = document.getElementById("GUI");
   // Añadir el panel al contenedor
   GUI.appendChild(stats.dom);
-  
 
   // Iniciar la renderización de la escena
   engine.runRenderLoop(() => {
@@ -170,23 +172,24 @@ function initScene() {
       socket.id,
       new BABYLON.Vector3(
         Math.random() * (10 - -10) + -10,
-        0.5,
+        0,
         Math.random() * (10 - -10) + -10
       ),
       new BABYLON.Vector3(0, 0, 0),
       "#ff0000",
-      scene
-    );
-    console.log("Se ha creado el personaje: ", character);
-    characters.push(character);
-    socket.emit("newCharacter", {
-      id: socket.id,
-      position: character.mesh.position,
-      rotation: character.mesh.rotation,
-      color: "#00ff00",
-    });
+      scene,
+      (character) => {
+        characters.push(character);
+        socket.emit("newCharacter", {
+          id: socket.id,
+          position: character.mesh.position,
+          rotation: character.mesh.rotation,
+          color: "#ff0000",
+        });
 
-    socket.emit("recuperarPersonajes", socket.id);
+        socket.emit("recuperarPersonajes", socket.id);
+      }
+    );
   });
 
   socket.on("disconnected", (id) => {
