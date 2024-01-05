@@ -2,6 +2,7 @@ export class Character {
   constructor(id, position, rotation, color, scene, callback) {
     this.id = id;
     this.mesh = null;
+    this.meshes = null;
     this.animations = {}; // Diccionario para almacenar animaciones
     this.mixer = null;
     this.isMoving = false;
@@ -14,6 +15,8 @@ export class Character {
       scene,
       (newMeshes, particleSystems, skeletons) => {
         // El modelo GLB contiene varios meshes, pero solo queremos el primero
+        console.log("newMeshes", newMeshes);
+        this.meshes = newMeshes;
         this.mesh = newMeshes[0];
         console.log("this.mesh", this.mesh);
         console.log("scene", scene);
@@ -43,6 +46,30 @@ export class Character {
         this.mesh.name = id;
         this.speed = 0.1;
 
+        // Cambiar el color de las partes del personaje
+        const characterMaterial = new BABYLON.StandardMaterial(
+          "characterMaterial",
+          scene
+        );
+        characterMaterial.diffuseColor = new BABYLON.Color3.FromHexString(
+          color
+        );
+
+        const partsToColor = [
+          "Body_primitive0",
+          "Body_primitive2",
+          "Ears",
+          "Arms_primitive0",
+          "Head_primitive0",
+        ];
+        this.mesh.getChildMeshes().forEach((object) => {
+          if (partsToColor.includes(object.name)) {
+            object.material = characterMaterial;
+          }
+        });
+
+        this.mesh.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
+
         if (callback) {
           callback(this);
         }
@@ -50,51 +77,49 @@ export class Character {
     );
   }
 
-  moveForward(characters) {
+  moveForward(characters, scene) {
     const newPosition = this.mesh.position.clone();
     newPosition.z -= this.speed;
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.z = newPosition.z;
-      this.smoothRotate(Math.PI); // Rotar 180 grados para ir hacia adelante
+      this.smoothRotate(0, scene); // Rotar 180 grados para ir hacia adelante
     }
   }
 
-  moveBackward(characters) {
+  moveBackward(characters, scene) {
     const newPosition = this.mesh.position.clone();
     newPosition.z += this.speed;
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.z = newPosition.z;
-      this.smoothRotate(0); // Rotar 0 grados para ir hacia atrás
+      this.smoothRotate(Math.PI, scene); // Rotar 0 grados para ir hacia atrás
     }
   }
 
-  moveLeft(characters) {
+  moveLeft(characters, scene) {
     const newPosition = this.mesh.position.clone();
     newPosition.x -= this.speed;
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.x = newPosition.x;
-      this.smoothRotate(-Math.PI / 2); // Rotar -90 grados para ir a la izquierda
+      this.smoothRotate(Math.PI / 2, scene); // Rotar -90 grados para ir a la izquierda
     }
   }
 
-  moveRight(characters) {
+  moveRight(characters, scene) {
     const newPosition = this.mesh.position.clone();
     newPosition.x += this.speed;
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.x = newPosition.x;
-      this.smoothRotate(Math.PI / 2); // Rotar 90 grados para ir a la derecha
+      this.smoothRotate(-Math.PI / 2, scene); // Rotar 90 grados para ir a la derecha
     }
   }
-  smoothRotate(targetRotation) {
-    this.mesh.rotation.y = this.lerpAngle(
-      this.mesh.rotation.y,
-      targetRotation,
-      0.1
-    );
+  smoothRotate(targetRotation, scene) {
+    this.meshes.forEach((mesh) => { 
+        mesh.rotation.z = this.lerpAngle(mesh.rotation.z, targetRotation, 0.1);
+    });
   }
 
   lerpAngle(a, b, t) {

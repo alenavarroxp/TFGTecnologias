@@ -23,8 +23,6 @@ function initScene() {
   camera.attachControl(canvas, true);
   camera.upperBetaLimit = Math.PI / 2.15; // Límite superior
 
-
-  
   const cameraInitialPosition = camera.position.clone();
 
   // Crear una luz
@@ -111,10 +109,10 @@ function initScene() {
   engine.runRenderLoop(() => {
     stats.begin();
     // Mover el personaje según las teclas presionadas
-    if (keys.W) character.moveForward(characters);
-    if (keys.A) character.moveLeft(characters);
-    if (keys.S) character.moveBackward(characters);
-    if (keys.D) character.moveRight(characters);
+    if (keys.W) character.moveForward(characters, scene);
+    if (keys.A) character.moveLeft(characters, scene);
+    if (keys.S) character.moveBackward(characters, scene);
+    if (keys.D) character.moveRight(characters, scene);
 
     if (keys.W || keys.A || keys.S || keys.D)
       socket.emit("moveCharacter", {
