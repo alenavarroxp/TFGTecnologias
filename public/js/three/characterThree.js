@@ -125,15 +125,14 @@ export class Character {
   }
 
   lerpAngle(a, b, t) {
-    const angleDiff = b - a;
-    if (Math.abs(angleDiff) > Math.PI) {
-      if (angleDiff > 0) {
-        b -= 2 * Math.PI;
-      } else {
-        b += 2 * Math.PI;
-      }
-    }
-    return a + t * (b - a);
+    const shortestDistance = this.shortestAngleDistance(a, b);
+    return a + t * shortestDistance;
+  }
+
+  shortestAngleDistance(a, b) {
+    const maxAngle = 2 * Math.PI; // El máximo valor para ángulos en radianes
+    const angleDiff = (b - a + maxAngle) % maxAngle;
+    return angleDiff > Math.PI ? angleDiff - maxAngle : angleDiff;
   }
 
   checkCollisions(newPosition, characters) {
@@ -148,7 +147,7 @@ export class Character {
         const distance = newPosition.distanceTo(character.mesh.position);
 
         // Detener el movimiento si hay colisión con otro personaje
-        if (distance < 1.25) {
+        if (distance < 1.5) {
           return true;
         }
       }

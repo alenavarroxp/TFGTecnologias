@@ -114,12 +114,24 @@ function initScene() {
     if (keys.S) character.moveBackward(characters, scene);
     if (keys.D) character.moveRight(characters, scene);
 
-    if (keys.W || keys.A || keys.S || keys.D)
-      socket.emit("moveCharacter", {
-        id: socket.id,
-        position: character.mesh.position,
-        rotation: character.mesh.rotation,
-      });
+    if (character) {
+      if (keys.W || keys.A || keys.S || keys.D) {
+        // Si se presiona alguna tecla de movimiento, reproducir la animación de caminar
+        character.playAnimation("CharacterArmature|Walk");
+      } else {
+        // Si no se presiona ninguna tecla, reproducir la animación Idle
+        character.playAnimation("CharacterArmature|Idle");
+      }
+      try {
+        socket.emit("moveCharacter", {
+          id: socket.id,
+          position: character.mesh.position,
+          rotation: character.mesh.rotation,
+          animation: character.animationName,
+        });
+      } catch (err) {}
+    }
+
     if (cameraMode === "followPlayer") {
       // Ajusta el valor de lerpFactor según la suavidad deseada
       const lerpFactor = 0.1;
@@ -182,7 +194,7 @@ function initScene() {
           id: socket.id,
           position: character.mesh.position,
           rotation: character.mesh.rotation,
-          color: "#ff0000",
+          color: "#00ff00",
         });
 
         socket.emit("recuperarPersonajes", socket.id);
@@ -213,20 +225,27 @@ function initScene() {
   socket.on("moveCharacter", (obj) => {
     const character = characters.find((character) => character.id === obj.id);
     if (character) {
-      character.mesh.position.copyFrom(obj.position);
-      character.mesh.rotation.copyFrom(obj.rotation);
+      try {
+        character.mesh.position.copyFrom(obj.position);
+        character.meshes.forEach((mesh) => {
+          mesh.rotation.copyFrom(obj.rotation);
+        });
+        character.playAnimation(obj.animation);
+      } catch (err) {}
     }
   });
 
   socket.on("recuperarPersonajes", (id) => {
     console.log("Recuperando personajes...");
     for (const character of characters) {
-      socket.emit("newCharacter", {
-        id: character.id,
-        position: character.mesh.position,
-        rotation: character.mesh.rotation,
-        color: "#00ff00",
-      });
+      try {
+        socket.emit("newCharacter", {
+          id: character.id,
+          position: character.mesh.position,
+          rotation: character.mesh.rotation,
+          color: "#00ff00",
+        });
+      } catch (err) {}
     }
   });
 }

@@ -68,8 +68,6 @@ export class Character {
           }
         });
 
-        this.mesh.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
-
         if (callback) {
           callback(this);
         }
@@ -77,23 +75,39 @@ export class Character {
     );
   }
 
-  moveForward(characters, scene) {
-    const newPosition = this.mesh.position.clone();
-    newPosition.z -= this.speed;
+  playAnimation(animationName) {
+    if (this.animations[animationName]) {
+      const action = this.animations[animationName];
+      if (this.currentAction == action) return;
 
-    if (!this.checkCollisions(newPosition, characters)) {
-      this.mesh.position.z = newPosition.z;
-      this.smoothRotate(0, scene); // Rotar 180 grados para ir hacia adelante
+      // Detener la animación actual antes de reproducir la nueva
+      if (this.currentAction) {
+        this.currentAction.stop();
+      }
+
+      action.start(true, 1.0, action.from, action.to, false);
+      this.animationName = animationName;
+      this.currentAction = action; // Guardar la referencia a la acción actual
     }
   }
 
-  moveBackward(characters, scene) {
+  moveForward(characters, scene) {
     const newPosition = this.mesh.position.clone();
     newPosition.z += this.speed;
 
     if (!this.checkCollisions(newPosition, characters)) {
       this.mesh.position.z = newPosition.z;
-      this.smoothRotate(Math.PI, scene); // Rotar 0 grados para ir hacia atrás
+      this.smoothRotate(Math.PI, scene); // Rotar 180 grados para ir hacia adelante
+    }
+  }
+
+  moveBackward(characters, scene) {
+    const newPosition = this.mesh.position.clone();
+    newPosition.z -= this.speed;
+
+    if (!this.checkCollisions(newPosition, characters)) {
+      this.mesh.position.z = newPosition.z;
+      this.smoothRotate(0, scene); // Rotar 0 grados para ir hacia atrás
     }
   }
 
@@ -117,20 +131,40 @@ export class Character {
     }
   }
   smoothRotate(targetRotation, scene) {
-    this.meshes.forEach((mesh) => { 
-        mesh.rotation.z = this.lerpAngle(mesh.rotation.z, targetRotation, 0.1);
+    this.meshes.forEach((mesh) => {
+      const currentRotation = mesh.rotation.z * (180 / Math.PI); // Convertir radianes a grados
+      const targetRotationDegrees = targetRotation * (180 / Math.PI);
+
+      const shortestDistance = this.shortestAngleDistance(
+        currentRotation,
+        targetRotationDegrees
+      );
+      const lerpedRotation = this.lerpAngle(
+        currentRotation,
+        currentRotation + shortestDistance,
+        0.1
+      );
+
+      mesh.rotation.z = lerpedRotation * (Math.PI / 180); // Convertir grados a radianes
     });
+  }
+  shortestAngleDistance(a, b) {
+    const maxAngle = 360; // El máximo valor para ángulos en grados
+    const angleDiff = (b - a + maxAngle) % maxAngle;
+    return angleDiff > 180 ? angleDiff - maxAngle : angleDiff;
   }
 
   lerpAngle(a, b, t) {
     const angleDiff = b - a;
-    if (Math.abs(angleDiff) > Math.PI) {
-      if (angleDiff > 0) {
-        b -= 2 * Math.PI;
-      } else {
-        b += 2 * Math.PI;
-      }
+
+    // Ajustar el ángulo a un rango [-PI, PI]
+    if (angleDiff > Math.PI) {
+      b -= 2 * Math.PI;
+    } else if (angleDiff < -Math.PI) {
+      b += 2 * Math.PI;
     }
+
+    // Realizar la interpolación lineal
     return a + t * (b - a);
   }
 
@@ -147,7 +181,7 @@ export class Character {
         const distance = distanceVector.length();
 
         // Detener el movimiento si hay colisión con otro personaje
-        if (distance < 1.0) {
+        if (distance < 1.5) {
           return true;
         }
       }
